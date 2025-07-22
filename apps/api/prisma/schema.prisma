@@ -45,7 +45,7 @@ model Account {
 
 model Department {
   id          String     @id @default(uuid())
-  name        String     @unique
+  posName        String     @unique
   positions   Position[]
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -53,7 +53,7 @@ model Department {
 
 model Position {
   id            String      @id @default(uuid())
-  name          String
+  deptName          String
   departmentId  String
   department    Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   users         User[]

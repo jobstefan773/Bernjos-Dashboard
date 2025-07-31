@@ -9,7 +9,7 @@ export class DepartmentsService {
 
   async create(createDepartmentDto: CreateDepartmentDto) {
     // Check for unique department name
-    const existing = await this.prisma.department.findUnique({ where: { name: createDepartmentDto.deptName } });
+    const existing = await this.prisma.department.findUnique({ where: { deptName: createDepartmentDto.deptName } });
     if (existing) {
       throw new ConflictException('A department with this name already exists.');
     }
@@ -17,7 +17,7 @@ export class DepartmentsService {
     // Create department (positions not included in DTO)
     return this.prisma.department.create({
       data: {
-        name: createDepartmentDto.deptName,
+        deptName: createDepartmentDto.deptName,
       },
     });
   }
@@ -37,10 +37,10 @@ export class DepartmentsService {
     // Check for duplicate department names in result (should not happen if DB is correct)
     const nameSet = new Set();
     for (const dept of departments) {
-      if (nameSet.has(dept.name)) {
-        throw new ConflictException(`Duplicate department name found: ${dept.name}`);
+      if (nameSet.has(dept.deptName)) {
+        throw new ConflictException(`Duplicate department name found: ${dept.deptName}`);
       }
-      nameSet.add(dept.name);
+      nameSet.add(dept.deptName);
     }
 
     // Validate: Each position name is unique within its department
@@ -48,10 +48,10 @@ export class DepartmentsService {
       if (dept.positions) {
         const posNameSet = new Set();
         for (const pos of dept.positions) {
-          if (posNameSet.has(pos.name)) {
-            throw new ConflictException(`Duplicate position name '${pos.name}' found in department '${dept.name}'.`);
+          if (posNameSet.has(pos.posName)) {
+            throw new ConflictException(`Duplicate position name '${pos.posName}' found in department '${dept.deptName}'.`);
           }
-          posNameSet.add(pos.name);
+          posNameSet.add(pos.posName);
         }
       }
     }
@@ -59,15 +59,15 @@ export class DepartmentsService {
     return departments;
   }
 
-  findOne(id: number) {
+  findOne(id: string) {
     return `This action returns a #${id} department`;
   }
 
-  update(id: number, updateDepartmentDto: UpdateDepartmentDto) {
+  update(id: string, updateDepartmentDto: UpdateDepartmentDto) {
     return `This action updates a #${id} department`;
   }
 
-  remove(id: number) {
+  remove(id: string) {
     return `This action removes a #${id} department`;
   }
 }

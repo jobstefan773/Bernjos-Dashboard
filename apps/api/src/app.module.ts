@@ -8,9 +8,12 @@ import { BranchesModule } from './branches/branches.module';
 import { UsersModule } from './users/users.module';
 import { SchedulesModule } from './schedules/schedules.module';
 import { AttendancesModule } from './attendances/attendances.module';
+import { PayRatesModule } from './pay-rates/pay-rates.module';
+import { PayrollPeriodsModule } from './payroll-periods/payroll-periods.module';
+import { PayrollItemsModule } from './payroll-items/payroll-items.module';
 
 @Module({
-  imports: [PrismaModule, BranchesModule, AccountsModule, UsersModule, AuthModule, SchedulesModule, AttendancesModule],
+  imports: [PrismaModule, BranchesModule, AccountsModule, UsersModule, AuthModule, SchedulesModule, AttendancesModule, PayRatesModule, PayrollPeriodsModule, PayrollItemsModule],
   controllers: [AppController],
   providers: [AppService]
 })

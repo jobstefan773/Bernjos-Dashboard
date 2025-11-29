@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 39, "column": 0}, "map": {"version":3,"sources":["file:///Users/jobstefan/Documents/Projects/Bernjos-Dashboard/apps/frontend/src/app/components/Sidebar.tsx"],"sourcesContent":["'use client';\n\nimport Link from \"next/link\";\nimport { Users } from \"lucide-react\";\n\nexport function AppSidebar() {\n  return (\n    <aside className=\"w-64 min-h-screen bg-gray-900 text-white flex flex-col\">\n      <div className=\"p-4 font-bold text-lg border-b border-gray-800\">HR Dashboard</div>\n      <nav className=\"flex-1 p-4\">\n        <ul>\n          <li>\n            <Link href=\"/employees\" className=\"flex items-center gap-2 py-2 hover:text-blue-400\">\n              <Users className=\"w-4 h-4\" />\n              Employees\n            </Link>\n          </li>\n        </ul>\n      </nav>\n    </aside>\n  );\n}"],"names":[],"mappings":";;;;AAEA;AACA;AAHA;;;;AAKO,SAAS;IACd,qBACE,8OAAC;QAAM,WAAU;;0BACf,8OAAC;gBAAI,WAAU;0BAAiD;;;;;;0BAChE,8OAAC;gBAAI,WAAU;0BACb,cAAA,8OAAC;8BACC,cAAA,8OAAC;kCACC,cAAA,8OAAC,4JAAA,CAAA,UAAI;4BAAC,MAAK;4BAAa,WAAU;;8CAChC,8OAAC,oMAAA,CAAA,QAAK;oCAAC,WAAU;;;;;;gCAAY;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAQ3C","debugId":null}}]
-}

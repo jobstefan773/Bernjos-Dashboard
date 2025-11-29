@@ -1,30 +1,20 @@
 {
   "name": "bernjos-dashboard",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "lint": "turbo run lint"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jobstefan773/Bernjos-Dashboard.git"
-  },
   "packageManager": "npm@11.4.1",
   "workspaces": [
     "apps/*"
   ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/jobstefan773/Bernjos-Dashboard/issues"
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "prettier -w ."
   },
-  "homepage": "https://github.com/jobstefan773/Bernjos-Dashboard#readme",
   "devDependencies": {
-    "turbo": "^2.5.4"
+    "prettier": "^3.4.2",
+    "turbo": "^2.5.4",
+    "typescript": "^5.7.3"
   }
 }

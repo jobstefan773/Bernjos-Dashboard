@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///Users/jobstefan/Documents/Projects/Bernjos-Dashboard/apps/frontend/src/app/employees/components/EmployeeList.tsx"],"sourcesContent":["'use client';\n\nexport default function EmployeeList() {\n  // Later, fetch and display employees here\n  return (\n    <div>\n      <p>Employee list will go here.</p>\n    </div>\n  );\n}"],"names":[],"mappings":";;;;AAAA;;AAEe,SAAS;IACtB,0CAA0C;IAC1C,qBACE,8OAAC;kBACC,cAAA,8OAAC;sBAAE;;;;;;;;;;;AAGT","debugId":null}}]
-}

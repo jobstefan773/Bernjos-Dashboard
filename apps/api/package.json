@@ -8,7 +8,9 @@
     "start:prod": "node dist/main.js",
     "build": "nest build",
     "lint": "eslint \"src/**/*.ts\"",
-    "format": "prettier -w src"
+    "format": "prettier -w src",
+    "seed": "ts-node -P prisma/tsconfig.json prisma/seed.ts",
+    "db:seed": "npm run seed"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

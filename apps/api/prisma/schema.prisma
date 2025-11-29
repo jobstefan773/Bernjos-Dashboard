@@ -7,7 +7,7 @@ generator client {
 }
 
 enum Role {
-  SUPER_ADMIN
+  SUPERADMIN
   ADMIN
   MANAGER
   EMPLOYEE
@@ -29,6 +29,25 @@ enum BstStatus {
   PENDING
   ACCEPTED
   RECEIVED
+  REJECTED
+  CANCELLED
+}
+
+enum RateType {
+  DAILY
+  MONTHLY
+  HOURLY
+}
+
+enum PayStatus {
+  PENDING
+  APPROVED
+  RELEASED
+}
+
+enum CashAdvanceStatus {
+  PENDING
+  APPROVED
   REJECTED
   CANCELLED
 }
@@ -76,7 +95,7 @@ model Account {
   dateHired   DateTime?
   isActive    Boolean     @default(true)
 
-  // OPTIONAL for admins (no branch required)
+  // OPTIONAL for some roles (e.g. SUPERADMIN not tied to a branch)
   branch      Branch?     @relation(fields: [branchId], references: [id])
   branchId    String?     @db.Uuid
 
@@ -84,9 +103,15 @@ model Account {
 
   schedules   Schedule[]
   leaveRequests LeaveRequest[]
+  bstRequestsCreated BstRequest[]      @relation("AccountBstRequests")
+  bstRequestsHandled BstRequest[]      @relation("ManagerBstRequests")
 
-  bstRequestsCreated BstRequest[] @relation("AccountBstRequests")
-  bstRequestsHandled BstRequest[] @relation("ManagerBstRequests")
+  attendances Attendance[]
+  payRate     PayRate?
+  payrollItems PayrollItem[]
+
+  cashAdvanceRequests CashAdvanceRequest[]
+  cashAdvances        CashAdvance[]
 
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -102,6 +127,7 @@ model Schedule {
   branch      Branch    @relation(fields: [branchId], references: [id])
   branchId    String    @db.Uuid
 
+  // planned schedule (not payroll source of truth)
   timeIn      DateTime
   timeOut     DateTime?
 
@@ -114,51 +140,167 @@ model Schedule {
 }
 
 model LeaveRequest {
-  id            String       @id @default(uuid()) @db.Uuid
+  id              String       @id @default(uuid()) @db.Uuid
 
-  account       Account      @relation(fields: [accountId], references: [id])
-  accountId     String       @db.Uuid
+  account         Account      @relation(fields: [accountId], references: [id])
+  accountId       String       @db.Uuid
 
-  branch        Branch?      @relation(fields: [branchId], references: [id])
-  branchId      String?      @db.Uuid
+  branch          Branch?      @relation(fields: [branchId], references: [id])
+  branchId        String?      @db.Uuid
 
-  startDate     DateTime
-  endDate       DateTime
-  reason        String
+  startDate       DateTime
+  endDate         DateTime
+  reason          String
 
-  status        LeaveStatus  @default(PENDING)
-  rejectionReason String?    // NEW
+  status          LeaveStatus  @default(PENDING)
+  rejectionReason String?
 
-  requestedAt   DateTime     @default(now())
-  reviewedAt    DateTime?
-  reviewedById  String?
+  requestedAt     DateTime     @default(now())
+  reviewedAt      DateTime?
+  reviewedById    String?
 
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@index([accountId, startDate, endDate])
 }
 
 model BstRequest {
-  id          String     @id @default(uuid()) @db.Uuid
+  id              String     @id @default(uuid()) @db.Uuid
 
-  requester   Account    @relation("AccountBstRequests", fields: [requesterId], references: [id])
-  requesterId String     @db.Uuid
+  requester       Account    @relation("AccountBstRequests", fields: [requesterId], references: [id])
+  requesterId     String     @db.Uuid
 
-  manager     Account?   @relation("ManagerBstRequests", fields: [managerId], references: [id])
-  managerId   String?    @db.Uuid
+  manager         Account?   @relation("ManagerBstRequests", fields: [managerId], references: [id])
+  managerId       String?    @db.Uuid
 
-  branch      Branch     @relation(fields: [branchId], references: [id])
-  branchId    String     @db.Uuid
+  branch          Branch     @relation(fields: [branchId], references: [id])
+  branchId        String     @db.Uuid
 
-  department  Department
+  department      Department
 
-  title       String
-  description String
+  title           String
+  description     String
 
-  status      BstStatus  @default(PENDING)
-  rejectionReason String?  // NEW
+  status          BstStatus  @default(PENDING)
+  rejectionReason String?
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model Attendance {
+  id                String    @id @default(uuid()) @db.Uuid
+
+  account           Account   @relation(fields: [accountId], references: [id])
+  accountId         String    @db.Uuid
+
+  date              DateTime
+  timeIn            DateTime?
+  timeOut           DateTime?
+
+  lateMinutes       Int?
+  undertimeMinutes  Int?
+  overtimeMinutes   Int?
+  isAbsent          Boolean?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([accountId, date])
+}
+
+model PayRate {
+  id          String    @id @default(uuid()) @db.Uuid
+
+  account     Account   @relation(fields: [accountId], references: [id])
+  accountId   String    @unique @db.Uuid
+
+  rateType    RateType
+  baseRate    Float     // per day / month / hour depending on rateType
+  overtimeRate Float?   // optional
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model PayrollPeriod {
+  id          String        @id @default(uuid()) @db.Uuid
+
+  name        String        // e.g. "Jan 1–15 2025"
+  startDate   DateTime
+  endDate     DateTime
+  isLocked    Boolean       @default(false)
+
+  payrollItems PayrollItem[]
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model PayrollItem {
+  id             String        @id @default(uuid()) @db.Uuid
+
+  payrollPeriod  PayrollPeriod @relation(fields: [periodId], references: [id])
+  periodId       String        @db.Uuid
+
+  account        Account       @relation(fields: [accountId], references: [id])
+  accountId      String        @db.Uuid
+
+  grossPay       Float
+  netPay         Float
+
+  totalDays      Float
+  totalOvertime  Float
+  totalLate      Float
+  totalUndertime Float
+
+  deductions     Float
+  allowances     Float
+
+  status         PayStatus     @default(PENDING)
+  approvedAt     DateTime?
+  releasedAt     DateTime?
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([periodId, accountId])
+}
+
+model CashAdvanceRequest {
+  id              String             @id @default(uuid()) @db.Uuid
+
+  account         Account            @relation(fields: [accountId], references: [id])
+  accountId       String             @db.Uuid
+
+  amount          Float
+  reason          String?
+
+  status          CashAdvanceStatus  @default(PENDING)
+  rejectionReason String?
+
+  requestedAt     DateTime           @default(now())
+  reviewedAt      DateTime?
+  reviewedById    String?
+
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model CashAdvance {
+  id          String    @id @default(uuid()) @db.Uuid
+
+  account     Account   @relation(fields: [accountId], references: [id])
+  accountId   String    @db.Uuid
+
+  amount      Float
+  description String?
+
+  dateGranted DateTime  @default(now())
+
+  isDeducted  Boolean   @default(false)
+  deductedAt  DateTime?
+
+  createdAt   DateTime  @default(now())
 }

@@ -1,0 +1,13 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    restart: unless-stopped
+    env_file:
+      - apps/api/.env
+    environment:
+      PORT: 3000
+      DATABASE_URL: "postgresql://postgres:postgres@host.docker.internal:54322/postgres?pgbouncer=false&connection_limit=1&sslmode=disable"
+    ports:
+      - "3001:3000"

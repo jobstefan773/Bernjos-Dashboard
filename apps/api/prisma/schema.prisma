@@ -48,7 +48,7 @@ model User {
   role         Role
 
   employee     Employee?  @relation(fields: [employeeId], references: [id])
-  employeeId   String?    @unique
+  employeeId   String?    @unique @db.Uuid
 
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -63,7 +63,7 @@ model Employee {
   isActive        Boolean    @default(true)
 
   branch          Branch     @relation(fields: [branchId], references: [id])
-  branchId        String
+  branchId        String     @db.Uuid
 
   user            User?
   schedules       Schedule[]
@@ -81,10 +81,10 @@ model Schedule {
   date        DateTime
 
   employee    Employee @relation(fields: [employeeId], references: [id])
-  employeeId  String
+  employeeId  String   @db.Uuid
 
   branch      Branch   @relation(fields: [branchId], references: [id])
-  branchId    String
+  branchId    String   @db.Uuid
 
   timeIn      DateTime
   timeOut     DateTime?
@@ -101,10 +101,10 @@ model LeaveRequest {
   id            String       @id @default(uuid()) @db.Uuid
 
   employee      Employee     @relation(fields: [employeeId], references: [id])
-  employeeId    String
+  employeeId    String       @db.Uuid
 
   branch        Branch?      @relation(fields: [branchId], references: [id])
-  branchId      String?
+  branchId      String?      @db.Uuid
 
   startDate     DateTime
   endDate       DateTime
@@ -126,13 +126,13 @@ model BstRequest {
   id          String     @id @default(uuid()) @db.Uuid
 
   requester   Employee   @relation("EmployeeBstRequests", fields: [requesterId], references: [id])
-  requesterId String
+  requesterId String     @db.Uuid
 
   manager     Employee?  @relation("ManagerBstRequests", fields: [managerId], references: [id])
-  managerId   String?
+  managerId   String?    @db.Uuid
 
   branch      Branch     @relation(fields: [branchId], references: [id])
-  branchId    String
+  branchId    String     @db.Uuid
 
   department  Department
 

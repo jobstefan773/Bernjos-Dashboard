@@ -2,7 +2,7 @@ import path from 'node:path';
 import { config as loadEnv } from 'dotenv';
 
 // Load environment variables for Prisma CLI (migrate/generate)
-loadEnv({ path: path.resolve(__dirname, '../.env') });
+loadEnv({ path: path.resolve(__dirname, './.env') });
 
 // Minimal Prisma config object; Prisma CLI will read this file.
 const prismaConfig = {

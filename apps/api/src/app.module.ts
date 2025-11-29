@@ -11,9 +11,10 @@ import { AttendancesModule } from './attendances/attendances.module';
 import { PayRatesModule } from './pay-rates/pay-rates.module';
 import { PayrollPeriodsModule } from './payroll-periods/payroll-periods.module';
 import { PayrollItemsModule } from './payroll-items/payroll-items.module';
+import { LeaveRequestsModule } from './leave-requests/leave-requests.module';
 
 @Module({
-  imports: [PrismaModule, BranchesModule, AccountsModule, UsersModule, AuthModule, SchedulesModule, AttendancesModule, PayRatesModule, PayrollPeriodsModule, PayrollItemsModule],
+  imports: [PrismaModule, BranchesModule, AccountsModule, UsersModule, AuthModule, SchedulesModule, AttendancesModule, PayRatesModule, PayrollPeriodsModule, PayrollItemsModule, LeaveRequestsModule],
   controllers: [AppController],
   providers: [AppService]
 })

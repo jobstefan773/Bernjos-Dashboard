@@ -17,6 +17,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { CreatePayrollItemDto } from './dto/create-payroll-item.dto';
+import { GeneratePayrollDto } from './dto/generate-payroll.dto';
 import { UpdatePayrollItemDto } from './dto/update-payroll-item.dto';
 import { PayrollItemsService } from './payroll-items.service';
 
@@ -35,6 +36,11 @@ export class PayrollItemsController {
   @Post()
   create(@Body() createPayrollItemDto: CreatePayrollItemDto) {
     return this.payrollItemsService.create(createPayrollItemDto);
+  }
+
+  @Post('generate')
+  generate(@Body() body: GeneratePayrollDto) {
+    return this.payrollItemsService.generatePayrollForPeriod(body.periodId);
   }
 
   @Get()

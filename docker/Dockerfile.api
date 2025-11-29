@@ -1,0 +1,22 @@
+# Multi-stage build for NestJS app in Turborepo
+FROM node:20-alpine AS base
+WORKDIR /app
+
+FROM base AS deps
+# Install workspace dependencies
+COPY package*.json turbo.json ./
+COPY apps/api/package*.json ./apps/api/
+RUN npm ci
+
+FROM deps AS build
+COPY . .
+RUN npm run build -- --filter=api...
+
+FROM base AS runner
+ENV NODE_ENV=production
+WORKDIR /app
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+RUN npm ci --omit=dev
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+CMD ["node", "apps/api/dist/main.js"]

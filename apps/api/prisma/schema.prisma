@@ -1,0 +1,145 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum Department {
+  SALES
+  PRODUCTION
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model Branch {
+  id          String      @id @default(uuid()) @db.Uuid
+  name        String
+  code        String      @unique
+  address     String
+  isActive    Boolean     @default(true)
+
+  employees   Employee[]
+  schedules   Schedule[]
+  bstRequests BstRequest[]
+  leaveRequests LeaveRequest[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  email        String     @unique
+  passwordHash String
+  fullName     String
+  role         Role
+
+  employee     Employee?  @relation(fields: [employeeId], references: [id])
+  employeeId   String?    @unique
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Employee {
+  id              String     @id @default(uuid()) @db.Uuid
+  code            String     @unique
+  fullName        String
+  department      Department
+  dateHired       DateTime
+  isActive        Boolean    @default(true)
+
+  branch          Branch     @relation(fields: [branchId], references: [id])
+  branchId        String
+
+  user            User?
+  schedules       Schedule[]
+  leaveRequests   LeaveRequest[]
+
+  bstRequestsCreated BstRequest[] @relation("EmployeeBstRequests")
+  bstRequestsHandled BstRequest[] @relation("ManagerBstRequests")
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model Schedule {
+  id          String   @id @default(uuid()) @db.Uuid
+  date        DateTime
+
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  employeeId  String
+
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  branchId    String
+
+  timeIn      DateTime
+  timeOut     DateTime?
+
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([employeeId, date])
+}
+
+model LeaveRequest {
+  id            String       @id @default(uuid()) @db.Uuid
+
+  employee      Employee     @relation(fields: [employeeId], references: [id])
+  employeeId    String
+
+  branch        Branch?      @relation(fields: [branchId], references: [id])
+  branchId      String?
+
+  startDate     DateTime
+  endDate       DateTime
+  reason        String
+
+  status        LeaveStatus  @default(PENDING)
+
+  requestedAt   DateTime     @default(now())
+  reviewedAt    DateTime?
+  reviewedById  String?
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([employeeId, startDate, endDate])
+}
+
+model BstRequest {
+  id          String     @id @default(uuid()) @db.Uuid
+
+  requester   Employee   @relation("EmployeeBstRequests", fields: [requesterId], references: [id])
+  requesterId String
+
+  manager     Employee?  @relation("ManagerBstRequests", fields: [managerId], references: [id])
+  managerId   String?
+
+  branch      Branch     @relation(fields: [branchId], references: [id])
+  branchId    String
+
+  department  Department
+
+  title       String
+  description String
+  status      String     @default("PENDING")
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}

@@ -24,84 +24,99 @@ enum LeaveStatus {
   CANCELLED
 }
 
+enum BstStatus {
+  PENDING
+  ACCEPTED
+  RECEIVED
+  REJECTED
+  CANCELLED
+}
+
 model Branch {
+  id            String        @id @default(uuid()) @db.Uuid
+  name          String
+  code          String        @unique
+  address       String
+  isActive      Boolean       @default(true)
+
+  accounts      Account[]
+  schedules     Schedule[]
+  bstRequests   BstRequest[]
+  leaveRequests LeaveRequest[]
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  username     String    @unique
+  passwordHash String
+  role         Role
+  contactNo    String?
+
+  // REQUIRED one-to-one relation
+  account      Account   @relation(fields: [accountId], references: [id])
+  accountId    String    @unique @db.Uuid
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Account {
   id          String      @id @default(uuid()) @db.Uuid
-  name        String
-  code        String      @unique
-  address     String
+  code        String?     @unique
+  firstName   String
+  middleName  String?
+  lastName    String
+  email       String      @unique
+  address     String?
+  department  Department?
+  dateHired   DateTime?
   isActive    Boolean     @default(true)
 
-  employees   Employee[]
+  // OPTIONAL for admins (no branch required)
+  branch      Branch?     @relation(fields: [branchId], references: [id])
+  branchId    String?     @db.Uuid
+
+  user        User?       // User holds the FK
+
   schedules   Schedule[]
-  bstRequests BstRequest[]
   leaveRequests LeaveRequest[]
+
+  bstRequestsCreated BstRequest[] @relation("AccountBstRequests")
+  bstRequestsHandled BstRequest[] @relation("ManagerBstRequests")
 
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 }
 
-model User {
-  id           String     @id @default(uuid()) @db.Uuid
-  email        String     @unique
-  passwordHash String
-  fullName     String
-  role         Role
-
-  employee     Employee?  @relation(fields: [employeeId], references: [id])
-  employeeId   String?    @unique @db.Uuid
-
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-}
-
-model Employee {
-  id              String     @id @default(uuid()) @db.Uuid
-  code            String     @unique
-  fullName        String
-  department      Department
-  dateHired       DateTime
-  isActive        Boolean    @default(true)
-
-  branch          Branch     @relation(fields: [branchId], references: [id])
-  branchId        String     @db.Uuid
-
-  user            User?
-  schedules       Schedule[]
-  leaveRequests   LeaveRequest[]
-
-  bstRequestsCreated BstRequest[] @relation("EmployeeBstRequests")
-  bstRequestsHandled BstRequest[] @relation("ManagerBstRequests")
-
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-}
-
 model Schedule {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
   date        DateTime
 
-  employee    Employee @relation(fields: [employeeId], references: [id])
-  employeeId  String   @db.Uuid
+  account     Account   @relation(fields: [accountId], references: [id])
+  accountId   String    @db.Uuid
 
-  branch      Branch   @relation(fields: [branchId], references: [id])
-  branchId    String   @db.Uuid
+  branch      Branch    @relation(fields: [branchId], references: [id])
+  branchId    String    @db.Uuid
 
   timeIn      DateTime
   timeOut     DateTime?
 
   notes       String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  @@unique([employeeId, date])
+  @@unique([accountId, date])
 }
 
 model LeaveRequest {
   id            String       @id @default(uuid()) @db.Uuid
 
-  employee      Employee     @relation(fields: [employeeId], references: [id])
-  employeeId    String       @db.Uuid
+  account       Account      @relation(fields: [accountId], references: [id])
+  accountId     String       @db.Uuid
 
   branch        Branch?      @relation(fields: [branchId], references: [id])
   branchId      String?      @db.Uuid
@@ -111,6 +126,7 @@ model LeaveRequest {
   reason        String
 
   status        LeaveStatus  @default(PENDING)
+  rejectionReason String?    // NEW
 
   requestedAt   DateTime     @default(now())
   reviewedAt    DateTime?
@@ -119,16 +135,16 @@ model LeaveRequest {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
-  @@index([employeeId, startDate, endDate])
+  @@index([accountId, startDate, endDate])
 }
 
 model BstRequest {
   id          String     @id @default(uuid()) @db.Uuid
 
-  requester   Employee   @relation("EmployeeBstRequests", fields: [requesterId], references: [id])
+  requester   Account    @relation("AccountBstRequests", fields: [requesterId], references: [id])
   requesterId String     @db.Uuid
 
-  manager     Employee?  @relation("ManagerBstRequests", fields: [managerId], references: [id])
+  manager     Account?   @relation("ManagerBstRequests", fields: [managerId], references: [id])
   managerId   String?    @db.Uuid
 
   branch      Branch     @relation(fields: [branchId], references: [id])
@@ -138,7 +154,9 @@ model BstRequest {
 
   title       String
   description String
-  status      String     @default("PENDING")
+
+  status      BstStatus  @default(PENDING)
+  rejectionReason String?  // NEW
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt

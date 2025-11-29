@@ -22,6 +22,8 @@ interface LeaveFilters {
 export class LeaveRequestsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private readonly adminRoles: Role[] = [Role.ADMIN, Role.SUPERADMIN];
+
   async create(createLeaveRequestDto: CreateLeaveRequestDto, currentUser: { userId: string; role: Role }) {
     const now = new Date();
     const start = new Date(createLeaveRequestDto.startDate);
@@ -65,7 +67,7 @@ export class LeaveRequestsService {
     };
 
     // Non-admins see only their own
-    if (![Role.ADMIN, Role.SUPERADMIN].includes(currentUser.role)) {
+    if (!this.adminRoles.includes(currentUser.role)) {
       where.accountId = currentUser.accountId;
     }
 
@@ -80,7 +82,7 @@ export class LeaveRequestsService {
     if (!leave) {
       throw new NotFoundException(`Leave request with id ${id} not found`);
     }
-    if (![Role.ADMIN, Role.SUPERADMIN].includes(currentUser.role) && leave.accountId !== currentUser.accountId) {
+    if (!this.adminRoles.includes(currentUser.role) && leave.accountId !== currentUser.accountId) {
       throw new ForbiddenException('Not allowed to view this leave request');
     }
     return leave;
@@ -96,45 +98,14 @@ export class LeaveRequestsService {
       throw new NotFoundException(`Leave request with id ${id} not found`);
     }
 
-    const isAdmin = [Role.ADMIN, Role.SUPERADMIN].includes(currentUser.role);
-    const isOwner = existing.accountId === currentUser.accountId;
-
-    if (!isAdmin && !isOwner) {
-      throw new ForbiddenException('Not allowed to update this leave request');
-    }
-
-    // Normal employees can only edit pending requests
-    if (!isAdmin && existing.status !== LeaveStatus.PENDING) {
-      throw new ForbiddenException('Only pending requests can be edited');
-    }
-
-    const nextStatus = updateLeaveRequestDto.status ?? existing.status;
     const start = updateLeaveRequestDto.startDate ? new Date(updateLeaveRequestDto.startDate) : existing.startDate;
     const end = updateLeaveRequestDto.endDate ? new Date(updateLeaveRequestDto.endDate) : existing.endDate;
     this.validateDates(start, end);
 
-    // If status change to APPROVED, ensure no overlap
-    if (nextStatus === LeaveStatus.APPROVED) {
-      await this.ensureNoOverlap(existing.accountId, start, end, id);
-    }
+    const nextStatus = updateLeaveRequestDto.status ?? existing.status;
+    await this.ensureUpdateAllowed(existing, currentUser, nextStatus, start, end, id);
 
-    const data: Prisma.LeaveRequestUpdateInput = {
-      branchId: updateLeaveRequestDto.branchId,
-      startDate: updateLeaveRequestDto.startDate ? start : undefined,
-      endDate: updateLeaveRequestDto.endDate ? end : undefined,
-      reason: updateLeaveRequestDto.reason,
-      status: updateLeaveRequestDto.status,
-      rejectionReason: updateLeaveRequestDto.rejectionReason
-    };
-
-    if (updateLeaveRequestDto.status && updateLeaveRequestDto.status !== existing.status) {
-      data.reviewedAt = new Date();
-      data.reviewedById = currentUser.userId;
-
-      if (updateLeaveRequestDto.status === LeaveStatus.REJECTED && !updateLeaveRequestDto.rejectionReason) {
-        throw new BadRequestException('rejectionReason is required when rejecting');
-      }
-    }
+    const data = this.buildUpdateData(updateLeaveRequestDto, existing, start, end, currentUser.userId);
 
     try {
       return await this.prisma.leaveRequest.update({
@@ -147,7 +118,7 @@ export class LeaveRequestsService {
   }
 
   async remove(id: string, currentUser: { role: Role }) {
-    if (![Role.ADMIN, Role.SUPERADMIN].includes(currentUser.role)) {
+    if (!this.adminRoles.includes(currentUser.role)) {
       throw new ForbiddenException('Only admins can delete leave requests');
     }
     try {
@@ -184,6 +155,58 @@ export class LeaveRequestsService {
     if (overlapping) {
       throw new ConflictException('Approved leave already exists for the overlapping dates');
     }
+  }
+
+  private async ensureUpdateAllowed(
+    existing: Prisma.LeaveRequestUncheckedCreateInput,
+    currentUser: { userId: string; role: Role; accountId: string },
+    nextStatus: LeaveStatus,
+    start: Date,
+    end: Date,
+    id: string
+  ) {
+    const isAdmin = this.adminRoles.includes(currentUser.role);
+    const isOwner = existing.accountId === currentUser.accountId;
+
+    if (!isAdmin && !isOwner) {
+      throw new ForbiddenException('Not allowed to update this leave request');
+    }
+
+    if (!isAdmin && existing.status !== LeaveStatus.PENDING) {
+      throw new ForbiddenException('Only pending requests can be edited');
+    }
+
+    if (nextStatus === LeaveStatus.APPROVED) {
+      await this.ensureNoOverlap(existing.accountId, start, end, id);
+    }
+  }
+
+  private buildUpdateData(
+    dto: UpdateLeaveRequestDto,
+    existing: Prisma.LeaveRequestUncheckedCreateInput,
+    start: Date,
+    end: Date,
+    reviewerId: string
+  ): Prisma.LeaveRequestUpdateInput {
+    const data: Prisma.LeaveRequestUpdateInput = {
+      branch: dto.branchId ? { connect: { id: dto.branchId } } : undefined,
+      startDate: dto.startDate ? start : undefined,
+      endDate: dto.endDate ? end : undefined,
+      reason: dto.reason,
+      status: dto.status,
+      rejectionReason: dto.rejectionReason
+    };
+
+    if (dto.status && dto.status !== existing.status) {
+      data.reviewedAt = new Date();
+      data.reviewedById = reviewerId;
+
+      if (dto.status === LeaveStatus.REJECTED && !dto.rejectionReason) {
+        throw new BadRequestException('rejectionReason is required when rejecting');
+      }
+    }
+
+    return data;
   }
 
   private handlePrismaError(error: unknown, id?: string): never {

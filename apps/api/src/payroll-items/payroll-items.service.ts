@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { Prisma, PayStatus, RateType } from '@prisma/client';
+import { Prisma, PayStatus, RateType, PayRate, Attendance } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreatePayrollItemDto } from './dto/create-payroll-item.dto';
 import { UpdatePayrollItemDto } from './dto/update-payroll-item.dto';
@@ -13,7 +13,7 @@ export class PayrollItemsService {
 
     try {
       return await this.prisma.payrollItem.create({
-        data: this.mapDtoToData(createPayrollItemDto)
+        data: this.mapCreateDtoToData(createPayrollItemDto)
       });
     } catch (error) {
       this.handlePrismaError(error);
@@ -48,7 +48,7 @@ export class PayrollItemsService {
     try {
       return await this.prisma.payrollItem.update({
         where: { id },
-        data: this.mapDtoToData(updatePayrollItemDto)
+        data: this.mapUpdateDtoToData(updatePayrollItemDto)
       });
     } catch (error) {
       this.handlePrismaError(error, id);
@@ -147,10 +147,7 @@ export class PayrollItemsService {
     return results;
   }
 
-  private computePayrollForAccount(
-    payRate: Prisma.PayRateGetPayload<{ select: { rateType: true; baseRate: true; overtimeRate: true } }> | null,
-    attendances: Prisma.AttendanceGetPayload<{}>[]
-  ) {
+  private computePayrollForAccount(payRate: PayRate | null, attendances: Attendance[]) {
     const totalDays = attendances.filter((att) => !att.isAbsent).length;
     const totalLate = attendances.reduce((sum, att) => sum + (att.lateMinutes ?? 0), 0);
     const totalUndertime = attendances.reduce((sum, att) => sum + (att.undertimeMinutes ?? 0), 0);
@@ -194,19 +191,37 @@ export class PayrollItemsService {
     }
   }
 
-  private mapDtoToData(dto: Partial<CreatePayrollItemDto | UpdatePayrollItemDto>): Prisma.PayrollItemUncheckedCreateInput {
+  private mapCreateDtoToData(dto: CreatePayrollItemDto): Prisma.PayrollItemUncheckedCreateInput {
+    return {
+      periodId: dto.periodId,
+      accountId: dto.accountId,
+      grossPay: dto.grossPay,
+      netPay: dto.netPay,
+      totalDays: dto.totalDays,
+      totalOvertime: dto.totalOvertime,
+      totalLate: dto.totalLate,
+      totalUndertime: dto.totalUndertime,
+      deductions: dto.deductions,
+      allowances: dto.allowances,
+      status: dto.status ?? PayStatus.PENDING,
+      approvedAt: dto.approvedAt ? new Date(dto.approvedAt) : undefined,
+      releasedAt: dto.releasedAt ? new Date(dto.releasedAt) : undefined
+    };
+  }
+
+  private mapUpdateDtoToData(dto: UpdatePayrollItemDto): Prisma.PayrollItemUncheckedUpdateInput {
     return {
       periodId: dto.periodId ?? undefined,
       accountId: dto.accountId ?? undefined,
-      grossPay: dto.grossPay as number | undefined,
-      netPay: dto.netPay as number | undefined,
-      totalDays: dto.totalDays as number | undefined,
-      totalOvertime: dto.totalOvertime as number | undefined,
-      totalLate: dto.totalLate as number | undefined,
-      totalUndertime: dto.totalUndertime as number | undefined,
-      deductions: dto.deductions as number | undefined,
-      allowances: dto.allowances as number | undefined,
-      status: (dto.status as PayStatus | undefined) ?? undefined,
+      grossPay: dto.grossPay ?? undefined,
+      netPay: dto.netPay ?? undefined,
+      totalDays: dto.totalDays ?? undefined,
+      totalOvertime: dto.totalOvertime ?? undefined,
+      totalLate: dto.totalLate ?? undefined,
+      totalUndertime: dto.totalUndertime ?? undefined,
+      deductions: dto.deductions ?? undefined,
+      allowances: dto.allowances ?? undefined,
+      status: dto.status ?? undefined,
       approvedAt: dto.approvedAt ? new Date(dto.approvedAt) : undefined,
       releasedAt: dto.releasedAt ? new Date(dto.releasedAt) : undefined
     };

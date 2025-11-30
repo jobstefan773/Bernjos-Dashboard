@@ -36,9 +36,9 @@ import {
 } from "@/components/ui/sheet";
 import { cn, getApiBaseUrl } from "@/lib/utils";
 
-type AppShellProps = {
+type AppShellProps = Readonly<{
   children: ReactNode;
-};
+}>;
 
 type NavItem = {
   label: string;
@@ -118,7 +118,7 @@ export function AppShell({ children }: AppShellProps) {
   );
 }
 
-function NavLink({ label, href, icon: Icon, badge }: NavItem) {
+function NavLink({ label, href, icon: Icon, badge }: Readonly<NavItem>) {
   const pathname = usePathname();
   const isActive = pathname === href;
   return (
@@ -173,7 +173,12 @@ function MobileNav() {
   );
 }
 
-function UserMenu({ isAuthenticated, onLogout }: { isAuthenticated: boolean; onLogout: () => void }) {
+type UserMenuProps = Readonly<{
+  isAuthenticated: boolean;
+  onLogout: () => void;
+}>;
+
+function UserMenu({ isAuthenticated, onLogout }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

@@ -1,3 +1,4 @@
+import * as bcrypt from 'bcrypt';
 import { prisma } from '../src/prisma';
 
 async function main() {
@@ -29,6 +30,42 @@ async function main() {
       create: branch
     });
   }
+
+  const superadminPassword = await bcrypt.hash('superadmin', 10);
+
+  const superAdminAccount = await prisma.account.upsert({
+    where: { email: 'superadmin@bernjos.local' },
+    update: {
+      firstName: 'Super',
+      lastName: 'Admin',
+      isActive: true
+    },
+    create: {
+      code: 'SA-0001',
+      firstName: 'Super',
+      lastName: 'Admin',
+      email: 'superadmin@bernjos.local',
+      address: 'System HQ',
+      isActive: true
+    }
+  });
+
+  await prisma.user.upsert({
+    where: { username: 'superadmin' },
+    update: {
+      passwordHash: superadminPassword,
+      role: 'SUPERADMIN',
+      contactNo: '0000000000',
+      accountId: superAdminAccount.id
+    },
+    create: {
+      username: 'superadmin',
+      passwordHash: superadminPassword,
+      role: 'SUPERADMIN',
+      contactNo: '0000000000',
+      account: { connect: { id: superAdminAccount.id } }
+    }
+  });
 }
 
 (async () => {

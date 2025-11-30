@@ -1,98 +1,69 @@
-:root {
-  color-scheme: light;
-  background-color: #0f172a;
-  color: #e2e8f0;
-  font-family: "Inter", "SF Pro Text", -apple-system, system-ui, sans-serif;
-  line-height: 1.6;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 21 100% 56%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 214 32% 91%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 92%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 21 100% 56%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 224 35% 6%;
+    --foreground: 213 31% 91%;
+    --card: 225 34% 8%;
+    --card-foreground: 213 31% 91%;
+    --popover: 225 34% 8%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 21 100% 56%;
+    --primary-foreground: 224 35% 6%;
+    --secondary: 225 24% 14%;
+    --secondary-foreground: 213 31% 91%;
+    --muted: 225 24% 14%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 225 24% 14%;
+    --accent-foreground: 213 31% 91%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 225 24% 14%;
+    --input: 225 24% 14%;
+    --ring: 21 100% 56%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  a {
+    @apply text-primary;
+  }
 }
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-}
-
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 24px;
-  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 25%),
-    radial-gradient(circle at 80% 0%, rgba(16, 185, 129, 0.12), transparent 22%),
-    linear-gradient(135deg, #0f172a 0%, #0b1220 100%);
-}
-
-.card {
-  max-width: 720px;
-  width: 100%;
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 32px;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(6px);
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: #a5b4fc;
-  margin: 0 0 8px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-h1 {
-  margin: 0 0 12px;
-  font-size: 32px;
-  letter-spacing: -0.02em;
-}
-
-.muted {
-  margin: 0 0 20px;
-  color: #cbd5e1;
-  max-width: 52ch;
-}
-
-.actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.button.primary {
-  background: linear-gradient(135deg, #3b82f6, #06b6d4);
-  color: #0b1220;
-  box-shadow: 0 12px 30px rgba(59, 130, 246, 0.35);
-}
-
-.button.primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 40px rgba(59, 130, 246, 0.45);
-}
-
-.button.ghost {
-  color: #e2e8f0;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.button.ghost:hover {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.05);
+.backdrop {
+  background: radial-gradient(circle at 14% 20%, rgba(59, 130, 246, 0.1), transparent 24%),
+    radial-gradient(circle at 88% 10%, rgba(16, 185, 129, 0.08), transparent 18%),
+    radial-gradient(circle at 50% 96%, rgba(236, 72, 153, 0.08), transparent 18%);
 }
